@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Meeting Notes Formatter — Turn Raw Notes into Structured Summaries</title>
+<meta name="description" content="Free AI tool to format messy meeting notes into clean, structured summaries with action items, decisions, and next steps.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "AI Meeting Notes Formatter",
+  "description": "Free AI tool to format messy meeting notes into clean structured summaries with action items and decisions.",
+  "url": "https://oliverwqcwrw.github.io/meeting-notes-formatter/",
+  "applicationCategory": "Productivity",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+  .header { background: #161b22; border-bottom: 1px solid #30363d; padding: 20px 24px; text-align: center; }
+  .header h1 { font-size: 28px; font-weight: 700; color: #f0f6fc; }
+  .header h1 span { color: #58a6ff; }
+  .header p { color: #8b949e; margin-top: 6px; font-size: 15px; }
+  .container { max-width: 900px; margin: 32px auto; padding: 0 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 16px; font-weight: 600; color: #f0f6fc; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; }
+  select, textarea, input[type=text], input[type=password] {
+    width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+    color: #c9d1d9; padding: 10px 12px; font-size: 14px; outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus, textarea:focus, input:focus { border-color: #58a6ff; }
+  textarea { resize: vertical; font-family: inherit; line-height: 1.6; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:600px){.grid2{grid-template-columns:1fr;}}
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px;
+    border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: #238636; color: #fff; }
+  .btn-primary:hover { background: #2ea043; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+  .btn-secondary:hover { background: #30363d; }
+  .actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .output-box {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+    padding: 20px; min-height: 200px; white-space: pre-wrap; font-size: 14px;
+    line-height: 1.7; color: #c9d1d9;
+  }
+  .output-box h3 { color: #58a6ff; font-size: 15px; margin-bottom: 8px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb66; }
+  .provider-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .provider-tab { padding: 6px 14px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #8b949e; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .provider-tab.active { background: #1f6feb22; border-color: #58a6ff; color: #58a6ff; }
+  .key-section { display: none; }
+  .key-section.active { display: block; }
+  .status { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 12px; }
+  .status.loading { background: #1f6feb22; border: 1px solid #1f6feb66; color: #58a6ff; }
+  .status.error { background: #da36332a; border: 1px solid #f8514966; color: #f85149; }
+  .format-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 6px 12px; border-radius: 20px; border: 1px solid #30363d; background: #0d1117; color: #8b949e; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+  .chip.selected { background: #1f6feb22; border-color: #58a6ff; color: #58a6ff; }
+  .donation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media(max-width:500px){.donation-grid{grid-template-columns:1fr;}}
+  .donation-item { text-align: center; }
+  .donation-item img { border-radius: 8px; border: 2px solid #30363d; }
+  .donation-item .addr { font-size: 11px; color: #8b949e; word-break: break-all; margin-top: 6px; }
+  .donation-item .label { font-size: 13px; font-weight: 600; color: #c9d1d9; margin-bottom: 8px; }
+  hr { border: none; border-top: 1px solid #30363d; margin: 6px 0; }
+  .formatted-output { line-height: 1.8; }
+  .formatted-output h3 { color: #58a6ff; font-size: 16px; margin: 16px 0 8px; }
+  .formatted-output ul { padding-left: 20px; }
+  .formatted-output li { margin-bottom: 4px; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-right: 4px; }
+  .badge-action { background: #da36332a; color: #f85149; border: 1px solid #f8514922; }
+  .badge-decision { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb22; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📝 AI Meeting Notes <span>Formatter</span></h1>
+  <p>Transform messy notes into clean, structured summaries — action items, decisions & next steps</p>
+</div>
+
+<div class="container">
+
+  <!-- API Config -->
+  <div class="card">
+    <h2>⚙️ AI Provider <span class="tag">Keys stored locally</span></h2>
+    <div class="provider-tabs">
+      <div class="provider-tab active" onclick="switchProvider('groq')">Groq (Free)</div>
+      <div class="provider-tab" onclick="switchProvider('openrouter')">OpenRouter (Free)</div>
+      <div class="provider-tab" onclick="switchProvider('deepseek')">DeepSeek</div>
+      <div class="provider-tab" onclick="switchProvider('openai')">OpenAI</div>
+    </div>
+    <div id="key-groq" class="key-section active">
+      <label>Groq API Key — <a href="https://console.groq.com" target="_blank" style="color:#58a6ff">Get free key</a></label>
+      <input type="password" id="key_groq" placeholder="gsk_..." oninput="saveKey('groq',this.value)">
+    </div>
+    <div id="key-openrouter" class="key-section">
+      <label>OpenRouter API Key — <a href="https://openrouter.ai" target="_blank" style="color:#58a6ff">Get free key</a></label>
+      <input type="password" id="key_openrouter" placeholder="sk-or-..." oninput="saveKey('openrouter',this.value)">
+    </div>
+    <div id="key-deepseek" class="key-section">
+      <label>DeepSeek API Key — <a href="https://platform.deepseek.com" target="_blank" style="color:#58a6ff">Get key</a></label>
+      <input type="password" id="key_deepseek" placeholder="sk-..." oninput="saveKey('deepseek',this.value)">
+    </div>
+    <div id="key-openai" class="key-section">
+      <label>OpenAI API Key — <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#58a6ff">Get key</a></label>
+      <input type="password" id="key_openai" placeholder="sk-..." oninput="saveKey('openai',this.value)">
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="card">
+    <h2>📋 Meeting Details</h2>
+    <div class="grid2" style="margin-bottom:16px">
+      <div>
+        <label>Meeting Title</label>
+        <input type="text" id="meeting-title" placeholder="Q3 Planning Session, Sprint Review...">
+      </div>
+      <div>
+        <label>Date & Attendees (optional)</label>
+        <input type="text" id="meeting-meta" placeholder="Jan 15 · Alice, Bob, Carol">
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label>Output Format</label>
+      <div class="format-chips">
+        <div class="chip selected" onclick="selectFormat(this,'executive')">Executive Summary</div>
+        <div class="chip" onclick="selectFormat(this,'detailed')">Detailed Minutes</div>
+        <div class="chip" onclick="selectFormat(this,'action')">Action Items Only</div>
+        <div class="chip" onclick="selectFormat(this,'slack')">Slack Update</div>
+      </div>
+    </div>
+    <label>Paste Your Raw Notes</label>
+    <textarea id="raw-notes" rows="10" placeholder="Paste your messy, unstructured meeting notes here...
+
+Example:
+- talked about q3 goals. alice wants 20% growth. need to revisit pricing
+- bob said the api is slow, needs fixing by friday. he'll handle
+- decided to sunset the legacy dashboard in sept
+- carol bringing new design mockups next week
+- next meeting thursday 3pm
+..."></textarea>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="formatNotes()" id="format-btn">
+        ✨ Format Notes
+      </button>
+      <button class="btn btn-secondary" onclick="loadExample()">Load Example</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+    <div id="status-msg"></div>
+  </div>
+
+  <!-- Output -->
+  <div class="card" id="output-card" style="display:none">
+    <h2>✅ Formatted Meeting Notes</h2>
+    <div class="output-box formatted-output" id="output-content"></div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="copyOutput()">📋 Copy</button>
+      <button class="btn btn-secondary" onclick="downloadOutput()">⬇️ Download .txt</button>
+    </div>
+  </div>
+
+  <!-- Donation -->
+  <div class="card">
+    <h2>❤️ Support This Free Tool</h2>
+    <p style="color:#8b949e; font-size:14px; margin-bottom:20px">If this tool saved you time, consider a small tip. Every contribution helps keep it free!</p>
+    <div class="donation-grid">
+      <div class="donation-item">
+        <div class="label">💛 USDT (TRC-20)</div>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=TSvC67jexputnNHayVR8fpScwFmwvZV8jp" alt="USDT QR">
+        <div class="addr">TSvC67jexputnNHayVR8fpScwFmwvZV8jp</div>
+      </div>
+      <div class="donation-item">
+        <div class="label">💎 ETH (ERC-20)</div>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=0x11e764fac3fcd4be16da43a252a62b156e06a632" alt="ETH QR">
+        <div class="addr">0x11e764fac3fcd4be16da43a252a62b156e06a632</div>
+      </div>
+    </div>
+  </div>
+
+  <p style="text-align:center; color:#484f58; font-size:12px; margin-bottom:32px">
+    Your API keys never leave your browser. 100% client-side. &nbsp;|&nbsp;
+    <a href="https://oliverwqcwrw.github.io" style="color:#58a6ff">More Free AI Tools</a>
+  </p>
+</div>
+
+<script>
+const PROVIDERS = {
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile' },
+  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'meta-llama/llama-3.3-70b-instruct:free' },
+  deepseek: { url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat' },
+  openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' }
+};
+
+let currentProvider = 'groq';
+let selectedFormat = 'executive';
+
+function switchProvider(p) {
+  currentProvider = p;
+  document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.key-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('key-' + p).classList.add('active');
+}
+
+function saveKey(p, v) { localStorage.setItem('api_key_' + p, v); }
+
+function loadKeys() {
+  ['groq','openrouter','deepseek','openai'].forEach(p => {
+    const v = localStorage.getItem('api_key_' + p);
+    if (v) document.getElementById('key_' + p).value = v;
+  });
+}
+
+function selectFormat(el, fmt) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedFormat = fmt;
+}
+
+function getPrompt(notes, title, meta, format) {
+  const formatInstructions = {
+    executive: `Format as an Executive Summary with these sections:
+## 📋 Meeting Overview
+[One paragraph summary of what was discussed and decided]
+
+## ✅ Key Decisions
+[Bullet list of decisions made]
+
+## 🎯 Action Items
+[Bullet list with owner and deadline if mentioned, format: • [Owner] – Task (by Date)]
+
+## 📅 Next Steps
+[What happens next / follow-up meetings]`,
+    detailed: `Format as Detailed Meeting Minutes with these sections:
+## 📋 Summary
+## 💬 Discussion Points  
+## ✅ Decisions Made
+## 🎯 Action Items (with owners)
+## ❓ Open Questions
+## 📅 Next Steps`,
+    action: `Extract ONLY action items in this format:
+## 🎯 Action Items
+
+| # | Task | Owner | Due Date |
+|---|------|-------|----------|
+[fill in table]
+
+## 📝 Notes
+[any important context]`,
+    slack: `Write a short Slack-friendly update (no markdown headers, use emoji bullets):
+Start with "📝 *Meeting Update: [Title]*"
+Then: key decisions, action items, next steps
+Keep it under 15 lines.`
+  };
+  
+  return `You are an expert meeting facilitator and note-taker.
+${title ? `Meeting: ${title}` : ''}
+${meta ? `Details: ${meta}` : ''}
+
+${formatInstructions[format]}
+
+Raw meeting notes to format:
+---
+${notes}
+---
+
+Produce clean, professional formatted notes. Infer owners and deadlines from context. Be concise but complete.`;
+}
+
+async function formatNotes() {
+  const notes = document.getElementById('raw-notes').value.trim();
+  const title = document.getElementById('meeting-title').value.trim();
+  const meta = document.getElementById('meeting-meta').value.trim();
+  
+  if (!notes) { showStatus('Please paste your meeting notes first.', 'error'); return; }
+  
+  const key = localStorage.getItem('api_key_' + currentProvider);
+  if (!key) { showStatus('Please enter your ' + currentProvider + ' API key above.', 'error'); return; }
+  
+  const btn = document.getElementById('format-btn');
+  btn.disabled = true; btn.textContent = '⏳ Formatting...';
+  showStatus('Sending to AI...', 'loading');
+  
+  const prov = PROVIDERS[currentProvider];
+  const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+  if (currentProvider === 'openrouter') headers['HTTP-Referer'] = 'https://oliverwqcwrw.github.io/meeting-notes-formatter/';
+  
+  try {
+    const resp = await fetch(prov.url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: prov.model,
+        messages: [{ role: 'user', content: getPrompt(notes, title, meta, selectedFormat) }],
+        temperature: 0.3,
+        max_tokens: 1500
+      })
+    });
+    
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`API error ${resp.status}: ${err.substring(0,200)}`);
+    }
+    
+    const data = await resp.json();
+    const result = data.choices[0].message.content;
+    
+    document.getElementById('output-card').style.display = '';
+    document.getElementById('output-content').innerHTML = renderMarkdown(result);
+    showStatus('', '');
+    document.getElementById('output-card').scrollIntoView({ behavior: 'smooth' });
+  } catch(e) {
+    showStatus(e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Format Notes';
+  }
+}
+
+function renderMarkdown(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^## (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^### (.+)$/gm,'<h4 style="color:#c9d1d9;margin:12px 0 6px">$1</h4>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:#f0f6fc">$1</strong>')
+    .replace(/^\| (.+) \|$/gm, (m) => {
+      if(m.includes('---')) return '';
+      const cells = m.slice(2,-2).split(' | ');
+      return '<tr>' + cells.map(c=>'<td style="padding:6px 10px;border:1px solid #30363d">'+c+'</td>').join('') + '</tr>';
+    })
+    .replace(/(<tr>.*<\/tr>
+?)+/g, m => '<table style="border-collapse:collapse;width:100%;margin:10px 0">'+m+'</table>')
+    .replace(/^[•\-\*] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>
+?)+/g, m => '<ul>'+m+'</ul>')
+    .replace(/
+
+/g,'<br><br>').replace(/
+/g,'<br>');
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.innerHTML = msg ? `<div class="status ${type}">${msg}</div>` : '';
+}
+
+function loadExample() {
+  document.getElementById('meeting-title').value = 'Q3 Product Planning';
+  document.getElementById('meeting-meta').value = 'July 8 · Alice (PM), Bob (Eng), Carol (Design)';
+  document.getElementById('raw-notes').value = `- Alice opened meeting, goal is to align on q3 priorities
+- discussed slow API performance - bob says its been p99 ~3s. needs to be under 500ms. bob to fix by july 15
+- carol showed new onboarding mockups. team liked them but wants to A/B test. carol to set up figma prototype by next week
+- decided to drop the legacy v1 API endpoint in september. alice to draft deprecation notice
+- pricing discussion - should we raise prices? decided to keep current pricing until q4 when we have more data
+- new feature: AI suggestions - everyone excited but deprioritized for now, maybe q4
+- bob mentioned we need better error logging, he'll add sentry integration this sprint
+- next sync scheduled for july 15 at 2pm
+- alice to share meeting notes with wider team`;
+}
+
+function copyOutput() {
+  const text = document.getElementById('output-content').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+  });
+}
+
+function downloadOutput() {
+  const text = document.getElementById('output-content').innerText;
+  const title = document.getElementById('meeting-title').value || 'meeting-notes';
+  const blob = new Blob([text], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = title.replace(/\s+/g,'-').toLowerCase() + '-formatted.txt';
+  a.click();
+}
+
+function clearAll() {
+  document.getElementById('raw-notes').value = '';
+  document.getElementById('meeting-title').value = '';
+  document.getElementById('meeting-meta').value = '';
+  document.getElementById('output-card').style.display = 'none';
+  showStatus('', '');
+}
+
+loadKeys();
+</script>
+</body>
+</html>
